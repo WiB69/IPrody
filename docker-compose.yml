@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres-payment:
+    image: postgres:16-alpine
+    container_name: payment-service-db
+    environment:
+      POSTGRES_DB: ${PAYMENT_DB_NAME:-payment_db}
+      POSTGRES_USER: ${PAYMENT_DB_USER:-payment_user}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_pass}
+    ports:
+      - "${PAYMENT_DB_PORT:-5432}:5432"
+    volumes:
+      - payment-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER:-payment_user} -d ${PAYMENT_DB_NAME:-payment_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: payment-service
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/${PAYMENT_DB_NAME:-payment_db}
+      SPRING_DATASOURCE_USERNAME: ${PAYMENT_DB_USER:-payment_user}
+      SPRING_DATASOURCE_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_pass}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-local}
+    ports:
+      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
+      - "${DEBUG_PORT:-5005}:5005"
+
+networks:
+  payment-network:
+    driver: bridge
+
+volumes:
+  payment-postgres-data:
