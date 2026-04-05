@@ -2,10 +2,10 @@ FROM maven:3.9.11-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 
 COPY pom.xml .
-COPY payment-service/pom.xml payment-service/
-COPY payment-service/src payment-service/src
+COPY customer-service/pom.xml customer-service/
+COPY customer-service/src customer-service/src
 
-WORKDIR /app/payment-service
+WORKDIR /app/customer-service
 
 RUN mvn -B dependency:go-offline
 
@@ -14,9 +14,9 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-COPY --from=build /app/payment-service/target/*.jar app.jar
+COPY --from=build /app/customer-service/target/*.jar app.jar
 
-EXPOSE 8084
+EXPOSE 8081
 #TLS
 EXPOSE 8443
 #debug
