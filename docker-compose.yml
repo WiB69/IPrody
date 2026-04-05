@@ -5,19 +5,81 @@ services:
     image: postgres:16-alpine
     container_name: payment-service-db
     environment:
-      POSTGRES_DB: ${PAYMENT_DB_NAME:-payment_db}
-      POSTGRES_USER: ${PAYMENT_DB_USER:-payment_user}
-      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_pass}
+      POSTGRES_DB: ${PAYMENT_DB_NAME}
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
     ports:
-      - "${PAYMENT_DB_PORT:-5432}:5432"
+      - "${PAYMENT_DB_PORT}:5432"
     volumes:
       - payment-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER:-payment_user} -d ${PAYMENT_DB_NAME:-payment_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PAYMENT_DB_USER} -d ${PAYMENT_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - microservices-network
+
+  postgres-customer:
+    image: postgres:16-alpine
+    container_name: customer-service-db
+    environment:
+      POSTGRES_DB: ${CUSTOMER_DB_NAME}
+      POSTGRES_USER: ${CUSTOMER_DB_USER}
+      POSTGRES_PASSWORD: ${CUSTOMER_DB_PASSWORD}
+    ports:
+      - "${CUSTOMER_DB_PORT}:5432"
+    volumes:
+      - customer-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CUSTOMER_DB_USER} -d ${CUSTOMER_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  postgres-inquiry:
+    image: postgres:16-alpine
+    container_name: inquiry-service-db
+    environment:
+      POSTGRES_DB: ${INQUIRY_DB_NAME}
+      POSTGRES_USER: ${INQUIRY_DB_USER}
+      POSTGRES_PASSWORD: ${INQUIRY_DB_PASSWORD}
+    ports:
+      - "${INQUIRY_DB_PORT}:5432"
+    volumes:
+      - inquiry-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${INQUIRY_DB_USER} -d ${INQUIRY_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - microservices-network
+
+  postgres-inventory:
+    image: postgres:16-alpine
+    container_name: inventory-service-db
+    environment:
+      POSTGRES_DB: ${INVENTORY_DB_NAME}
+      POSTGRES_USER: ${INVENTORY_DB_USER}
+      POSTGRES_PASSWORD: ${INVENTORY_DB_PASSWORD}
+    ports:
+      - "${INVENTORY_DB_PORT}:5432"
+    volumes:
+      - inventory-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${INVENTORY_DB_USER} -d ${INVENTORY_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - microservices-network
 
   payment-service:
     build:
@@ -28,17 +90,109 @@ services:
       postgres-payment:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/${PAYMENT_DB_NAME:-payment_db}
-      SPRING_DATASOURCE_USERNAME: ${PAYMENT_DB_USER:-payment_user}
-      SPRING_DATASOURCE_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment_pass}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE:-local}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-payment:5432/${PAYMENT_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${PAYMENT_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
     ports:
-      - "${PAYMENT_SERVICE_PORT:-8084}:8084"
-      - "${DEBUG_PORT:-5005}:5005"
+      - "${PAYMENT_SERVICE_PORT}:8080"
+      - "${PAYMENT_SERVICE_TLS_PORT}:8443"
+      - "${DEBUG_PORT}:5005"
+    networks:
+      - microservices-network
 
+  customer-service:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    container_name: customer-service
+    depends_on:
+      postgres-customer:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-customer:5432/${CUSTOMER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${CUSTOMER_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CUSTOMER_DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+    ports:
+      - "${CUSTOMER_SERVICE_PORT}:8080"
+      - "${CUSTOMER_SERVICE_TLS_PORT}:8443"
+      - "${CUSTOMER_DEBUG_PORT}:5005"
+    networks:
+      - microservices-network
+
+  inquiry-service:
+    build:
+      context: .
+      dockerfile: inquiry-service/Dockerfile
+    container_name: inquiry-service
+    depends_on:
+      postgres-inquiry:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-inquiry:5432/${INQUIRY_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${INQUIRY_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${INQUIRY_DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+    ports:
+      - "${INQUIRY_SERVICE_PORT}:8080"
+      - "${INQUIRY_SERVICE_TLS_PORT}:8443"
+      - "${INQUIRY_DEBUG_PORT}:5005"
+    networks:
+      - microservices-network
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: inventory-service
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-inventory:5432/${INVENTORY_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${INVENTORY_DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${INVENTORY_DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE}
+    ports:
+      - "${INVENTORY_SERVICE_PORT}:8080"
+      - "${INVENTORY_SERVICE_TLS_PORT}:8443"
+      - "${INVENTORY_DEBUG_PORT}:5005"
+    networks:
+      - microservices-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: keycloak
+    command: [ "start-dev", "--import-realm" ]
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DEF_USER_PASSWORD=${KEYCLOAK_DEF_USER_PASSWORD}
+      - KC_HOSTNAME_STRICT=false
+      - KC_HTTP_ENABLED=true
+      - KC_HEALTH_ENABLED=true
+    ports:
+      - "${KEYCLOAK_PORT}:8080"
+    volumes:
+      - ./keycloak/iprody-realm.json:/opt/keycloak/data/import/iprody-realm.json:ro
+      - keycloak_data:/opt/keycloak/data
+    healthcheck:
+      test: [ "CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080; echo -e 'GET /health/ready HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n' >&3; cat <&3 | grep -q '200 OK'" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - microservices-network
 networks:
-  payment-network:
+  microservices-network:
     driver: bridge
 
 volumes:
   payment-postgres-data:
+  customer-postgres-data:
+  inquiry-postgres-data:
+  inventory-postgres-data:
+  keycloak_data:
