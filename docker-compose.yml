@@ -18,8 +18,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - microservices-network
 
   postgres-customer:
     image: postgres:16-alpine
@@ -38,8 +36,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - microservices-network
 
   postgres-inquiry:
     image: postgres:16-alpine
@@ -58,8 +54,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - microservices-network
 
   postgres-inventory:
     image: postgres:16-alpine
@@ -78,8 +72,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - microservices-network
 
   payment-service:
     build:
@@ -98,8 +90,6 @@ services:
       - "${PAYMENT_SERVICE_PORT}:8080"
       - "${PAYMENT_SERVICE_TLS_PORT}:8443"
       - "${DEBUG_PORT}:5005"
-    networks:
-      - microservices-network
 
   customer-service:
     build:
@@ -118,8 +108,6 @@ services:
       - "${CUSTOMER_SERVICE_PORT}:8080"
       - "${CUSTOMER_SERVICE_TLS_PORT}:8443"
       - "${CUSTOMER_DEBUG_PORT}:5005"
-    networks:
-      - microservices-network
 
   inquiry-service:
     build:
@@ -138,8 +126,6 @@ services:
       - "${INQUIRY_SERVICE_PORT}:8080"
       - "${INQUIRY_SERVICE_TLS_PORT}:8443"
       - "${INQUIRY_DEBUG_PORT}:5005"
-    networks:
-      - microservices-network
 
   inventory-service:
     build:
@@ -158,8 +144,6 @@ services:
       - "${INVENTORY_SERVICE_PORT}:8080"
       - "${INVENTORY_SERVICE_TLS_PORT}:8443"
       - "${INVENTORY_DEBUG_PORT}:5005"
-    networks:
-      - microservices-network
 
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
@@ -168,7 +152,6 @@ services:
     environment:
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
       - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
-      - KC_DEF_USER_PASSWORD=${KEYCLOAK_DEF_USER_PASSWORD}
       - KC_HOSTNAME_STRICT=false
       - KC_HTTP_ENABLED=true
       - KC_HEALTH_ENABLED=true
@@ -184,11 +167,6 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
-    networks:
-      - microservices-network
-networks:
-  microservices-network:
-    driver: bridge
 
 volumes:
   payment-postgres-data:
