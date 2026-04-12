@@ -71,9 +71,9 @@
     <!-- Checks for Size Violations.                    -->
     <!-- See https://checkstyle.org/checks/sizes/index.html -->
     <module name="FileLength"/>
-    <module name="LineLength">
-        <property name="fileExtensions" value="java"/>
-    </module>
+<!--    <module name="LineLength">-->
+<!--        <property name="fileExtensions" value="java"/>-->
+<!--    </module>-->
 
     <!-- Checks for whitespace                               -->
     <!-- See https://checkstyle.org/checks/whitespace/index.html -->
@@ -182,8 +182,8 @@
         <!-- See https://checkstyle.org/checks/design/index.html -->
         <module name="DesignForExtension"/>
         <module name="DeclarationOrder"/>
-        <module name="FinalClass"/>
-<!--        <module name="HideUtilityClassConstructor"/>-->
+<!--        <module name="FinalClass"/>-->
+        <module name="HideUtilityClassConstructor"/>
         <module name="InterfaceIsType"/>
         <module name="VisibilityModifier"/>
 
