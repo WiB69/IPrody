@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: create-schema-payment-db.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: create-table-payment.yaml
+      relativeToChangelogFile: true

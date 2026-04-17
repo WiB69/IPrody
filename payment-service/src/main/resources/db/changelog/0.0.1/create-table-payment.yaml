@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: create table 'payment'
+      author: dmitriev
+      changes:
+        - createTable:
+            schemaName: payment_db
+            tableName: PAYMENT
+            columns:
+              - column:
+                  name: ID
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: INQUIRY_REF_ID
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: AMOUNT
+                  type: DECIMAL(5, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: CURRENCY
+                  type: VARCHAR(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: TRANSACTION_REF_ID
+                  type: UUID
+                  constraints:
+                    nullable: true
+              - column:
+                  name: STATUS
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: NOTE
+                  type: VARCHAR(1024)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: CREATED_AT
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: UPDATED_AT
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+      rollback:
+        - dropTable:
+            tableName: PAYMENT
