@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: create schema 'payment_db'
+      author: dmitriev
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS payment_db;
+      rollback:
+        - sql:
+            sql: DROP SCHEMA IF EXISTS payment_db;
