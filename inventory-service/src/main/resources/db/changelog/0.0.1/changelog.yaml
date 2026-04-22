@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: create-schema-inventory-db.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: create-table-group.yaml
+      relativeToChangelogFile: true

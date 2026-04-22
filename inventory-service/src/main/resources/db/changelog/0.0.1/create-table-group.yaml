@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: create table 'group'
+      author: dmitriev
+      changes:
+        - createTable:
+            tableName: group
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: group_ref_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: current_count
+                  type: BIGINT
+              - column:
+                  name: limit_int
+                  type: BIGINT
+      rollback:
+        - dropTable:
+            tableName: group
