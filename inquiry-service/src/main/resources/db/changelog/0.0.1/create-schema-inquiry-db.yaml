@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: create schema 'inquiry_db'
+      author: dmitriev
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS inquiry_db;
+      rollback:
+        - sql:
+            sql: DROP SCHEMA IF EXISTS inquiry_db;
