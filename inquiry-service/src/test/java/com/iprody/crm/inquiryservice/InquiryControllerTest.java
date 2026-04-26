@@ -71,4 +71,13 @@ class InquiryControllerTest {
                         .param("limit", "10"))
                 .andExpect(status().isOk());
     }
+    @Test
+    void shouldReturnBadRequestWhenSaveWithInvalidData() throws Exception {
+        InquiryDataDto requestDto = new InquiryDataDto();
+
+        mockMvc.perform(post("/api/v1/inquires")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(OBJECT_MAPPER.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+    }
 }

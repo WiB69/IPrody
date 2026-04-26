@@ -11,16 +11,23 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public class SpringBootApplicationTest {
 
-    @Container
-    public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:16")
-            .withDatabaseName("inquiry_db")
-            .withReuse(true);
+    protected static final PostgreSQLContainer<?> POSTGRESQL_CONTAINER;
+
+    static {
+        POSTGRESQL_CONTAINER = new PostgreSQLContainer<>("postgres:16")
+                .withDatabaseName("customer_db")
+                .withUsername("test")
+                .withPassword("test")
+                .withReuse(false);
+        POSTGRESQL_CONTAINER.start();
+    }
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
-        registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
+        registry.add("spring.datasource.url", POSTGRESQL_CONTAINER::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRESQL_CONTAINER::getUsername);
+        registry.add("spring.datasource.password", POSTGRESQL_CONTAINER::getPassword);
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.liquibase.change-log", () -> "classpath:/db/changelog/main-changelog.yaml");
         registry.add("spring.liquibase.enabled", () -> "true");
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
