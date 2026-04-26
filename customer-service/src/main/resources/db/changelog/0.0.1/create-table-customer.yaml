@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: create table 'CUSTOMER'
+      author: dmitriev
+      changes:
+        - createTable:
+            schemaName: customer_db
+            tableName: CUSTOMER
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: FULL_NAME
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: CONTRACT_DETAILS_IS
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: CREATED_AT
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: UPDATED_AT
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableSchemaName: customer_db
+            baseTableName: CUSTOMER
+            baseColumnNames: CONTRACT_DETAILS_IS
+            referencedTableSchemaName: customer_db
+            referencedTableName: CONTRACT
+            referencedColumnNames: id
+            constraintName: fk_customer_contract
+      rollback:
+        - dropTable:
+            tableName: CUSTOMER
