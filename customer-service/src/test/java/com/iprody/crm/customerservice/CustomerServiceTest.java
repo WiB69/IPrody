@@ -4,6 +4,7 @@ import com.iprody.crm.customerservice.dto.*;
 import com.iprody.crm.customerservice.entity.Contract;
 import com.iprody.crm.customerservice.entity.Customer;
 import com.iprody.crm.customerservice.enums.CustomerSortField;
+import com.iprody.crm.customerservice.exception.ResourceNotFoundException;
 import com.iprody.crm.customerservice.repository.ContractRepository;
 import com.iprody.crm.customerservice.repository.CustomerRepository;
 import com.iprody.crm.customerservice.service.CustomerServiceImpl;
@@ -25,8 +26,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -110,14 +113,13 @@ class CustomerServiceTest {
     }
 
     @Test
-    void shouldReturnNullWhenCustomerNotFound() {
+    void shouldThrowExceptionWhenCustomerNotFound() {
         UUID nonExistentId = UUID.randomUUID();
 
         when(customerRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        Customer result = customerService.findById(nonExistentId);
+        assertThrows(ResourceNotFoundException.class, () -> customerService.findById(nonExistentId));
 
-        assertThat(result).isNull();
         verify(customerRepository, times(1)).findById(nonExistentId);
     }
 
@@ -222,7 +224,9 @@ class CustomerServiceTest {
 
         when(customerRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
-        customerService.delete(nonExistentId);
+        assertThatThrownBy(() -> customerService.delete(nonExistentId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Customer not found with id: " + nonExistentId);
 
         verify(customerRepository, times(1)).findById(nonExistentId);
         verify(customerRepository, never()).delete(any(Customer.class));

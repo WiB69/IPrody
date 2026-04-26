@@ -5,10 +5,13 @@ import com.iprody.crm.customerservice.dto.CustomerData;
 import com.iprody.crm.customerservice.dto.CustomerFilter;
 import com.iprody.crm.customerservice.entity.Contract;
 import com.iprody.crm.customerservice.entity.Customer;
+import com.iprody.crm.customerservice.exception.InvalidRequestException;
+import com.iprody.crm.customerservice.exception.ResourceNotFoundException;
 import com.iprody.crm.customerservice.repository.ContractRepository;
 import com.iprody.crm.customerservice.repository.CustomerRepository;
 import com.iprody.crm.customerservice.utils.Sorting;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
@@ -28,6 +32,11 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     public Customer save(CustomerData customerData) {
+        log.debug("Saving new customer with data: {}", customerData);
+        if (customerData.getContract() == null) {
+            throw new InvalidRequestException("Contract data is required");
+        }
+
         ContractData contractData = customerData.getContract();
         Contract contractSaved = contractRepository.save(new Contract(contractData.getEmail(), contractData.getPhoneNumber()));
         return customerRepository.save(new Customer(customerData.getFullName(), contractSaved));
@@ -35,7 +44,12 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional(readOnly = true)
     public Customer findById(UUID id) {
-        return customerRepository.findById(id).orElse(null);
+        log.debug("Finding customer by id: {}", id);
+        return customerRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error("Customer not found with id: {}", id);
+                    return new ResourceNotFoundException("Customer not found with id: " + id);
+                });
     }
 
     public List<Customer> findAllByFilter(CustomerFilter filter, Integer offset, Integer limit, Sorting sorting) {
@@ -50,6 +64,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     public Customer update(UUID id, CustomerData customerData) {
+        log.debug("Updating customer with id: {}", id);
+
         Customer customerDb = findById(id);
         customerDb.setFullName(customerData.getFullName());
         customerDb.setUpdatedAt(Timestamp.valueOf(LocalDateTime.now()));
@@ -61,6 +77,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Transactional
     public void delete(UUID id) {
+        log.debug("Deleting customer with id: {}", id);
         customerRepository.delete(findById(id));
     }
 }

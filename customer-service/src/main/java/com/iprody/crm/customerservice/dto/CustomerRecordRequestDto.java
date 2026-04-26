@@ -10,9 +10,9 @@ public class CustomerRecordRequestDto {
     private SortingDto sortDto;
 
     @Min(value = 0, message = "Offset must be non-negative")
-    private Integer offset;
+    private Integer offset = 0;
 
     @Min(value = 1, message = "Limit must be at least 1")
     @Max(value = 100, message = "Limit cannot exceed 100")
-    private Integer limit;
+    private Integer limit = 10;
 }

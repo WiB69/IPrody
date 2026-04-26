@@ -7,6 +7,7 @@ import com.iprody.crm.customerservice.mapper.CustomerMapper;
 import com.iprody.crm.customerservice.service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @Validated
@@ -23,6 +25,7 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     public CustomerDto getById(@PathVariable("id") UUID id) {
+        log.info("Received request to get customer by id: {}", id);
         return CustomerMapper.INSTANCE.toDto(customerService.findById(id));
     }
 

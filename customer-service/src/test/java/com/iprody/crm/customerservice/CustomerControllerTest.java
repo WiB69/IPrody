@@ -1,7 +1,7 @@
 package com.iprody.crm.customerservice;
 
 import com.iprody.crm.customerservice.controller.CustomerController;
-import com.iprody.crm.customerservice.dto.*;
+import com.iprody.crm.customerservice.dto.CustomerDataDto;
 import com.iprody.crm.customerservice.entity.Contract;
 import com.iprody.crm.customerservice.entity.Customer;
 import com.iprody.crm.customerservice.service.CustomerServiceImpl;
@@ -9,24 +9,23 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CustomerController.class)
 @DisplayName("CustomerController tests")

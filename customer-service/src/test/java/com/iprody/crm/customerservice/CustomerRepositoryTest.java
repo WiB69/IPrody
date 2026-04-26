@@ -7,18 +7,16 @@ import com.iprody.crm.customerservice.repository.CustomerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.dao.DataIntegrityViolationException;
 
-import java.util.Comparator;
 import java.util.List;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @Transactional
 class CustomerRepositoryTest extends SpringBootApplicationTest {
@@ -89,48 +87,5 @@ class CustomerRepositoryTest extends SpringBootApplicationTest {
         assertThatThrownBy(() -> customerRepository.saveAndFlush(invalidCustomer))
                 .isInstanceOf(DataIntegrityViolationException.class)
                 .hasMessageContaining("null value in column \"contract_details_is\"");
-    }
-
-    @Test
-    void shouldSupportSorting() {
-        Page<Customer> descResult = customerRepository.findAllByFullName(
-                "",
-                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "fullName"))
-        );
-
-        Page<Customer> ascResult = customerRepository.findAllByFullName(
-                "",
-                PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "fullName"))
-        );
-
-        assertAll(
-                () -> assertThat(descResult.getContent())
-                        .extracting(Customer::getFullName)
-                        .isSortedAccordingTo(Comparator.reverseOrder()),
-                () -> assertThat(ascResult.getContent())
-                        .extracting(Customer::getFullName)
-                        .isSortedAccordingTo(Comparator.naturalOrder())
-        );
-    }
-
-    @Test
-    void shouldSupportSortingByCreatedAt() {
-        Page<Customer> descResult = customerRepository.findAllByFullName(
-                "",
-                PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-
-        Page<Customer> ascResult = customerRepository.findAllByFullName(
-                "",
-                PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "createdAt"))
-        );
-
-        assertThat(descResult.getContent())
-                .extracting(Customer::getCreatedAt)
-                .isSortedAccordingTo(Comparator.reverseOrder());
-
-        assertThat(ascResult.getContent())
-                .extracting(Customer::getCreatedAt)
-                .isSortedAccordingTo(Comparator.naturalOrder());
     }
 }

@@ -1,5 +1,8 @@
 package com.iprody.crm.customerservice.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum CustomerSortField {
     FULL_NAME("fullName");
 
@@ -9,7 +12,4 @@ public enum CustomerSortField {
         this.fieldName = name;
     }
 
-    public String getFieldName() {
-        return fieldName;
-    }
 }
