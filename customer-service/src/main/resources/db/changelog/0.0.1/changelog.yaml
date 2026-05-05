@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - include:
+      file: create-schema-customer-db.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: create-table-contract.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: create-table-customer.yaml
+      relativeToChangelogFile: true

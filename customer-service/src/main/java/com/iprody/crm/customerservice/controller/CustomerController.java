@@ -1,21 +1,61 @@
 package com.iprody.crm.customerservice.controller;
 
+import com.iprody.crm.customerservice.dto.CustomerDataDto;
+import com.iprody.crm.customerservice.dto.CustomerDto;
+import com.iprody.crm.customerservice.dto.CustomerRecordRequestDto;
+import com.iprody.crm.customerservice.mapper.CustomerMapper;
+import com.iprody.crm.customerservice.service.CustomerService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@RequiredArgsConstructor
 @RestController
-@RequestMapping(value = "customer", produces = MediaType.APPLICATION_JSON_VALUE)
+@Validated
+@RequestMapping(value = "/api/v1/customers", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CustomerController {
+    private final CustomerService customerService;
 
-    /**
-     *  Simple hello.
-     *
-     *  @return - hello
-     */
-    @GetMapping
-    public String hello() {
-        return "Hello World";
+    @GetMapping("/{id}")
+    public CustomerDto getById(@PathVariable("id") UUID id) {
+        log.info("Received request to get customer by id: {}", id);
+        return CustomerMapper.INSTANCE.toDto(customerService.findById(id));
+    }
+
+    @PostMapping
+    public CustomerDto save(@Valid @RequestBody CustomerDataDto dto) {
+        return CustomerMapper.INSTANCE.toDto(
+                customerService.save(
+                        CustomerMapper.INSTANCE.toData(dto)
+                )
+        );
+    }
+
+    @PutMapping("/{id}")
+    public CustomerDto update(@PathVariable("id") UUID id,
+                              @Valid @RequestBody CustomerDataDto dto) {
+        return CustomerMapper.INSTANCE.toDto(
+                customerService.update(
+                        id,
+                        CustomerMapper.INSTANCE.toData(dto)
+                )
+        );
+    }
+
+    @GetMapping("/search")
+    public List<CustomerDto> findAllByFilter(@Valid CustomerRecordRequestDto customerRecordRequestDto) {
+        return CustomerMapper.INSTANCE.toDtoList(
+                customerService.findAllByFilter(
+                        CustomerMapper.INSTANCE.toFilter(customerRecordRequestDto.getFilter()),
+                        customerRecordRequestDto.getOffset(),
+                        customerRecordRequestDto.getLimit(),
+                        CustomerMapper.INSTANCE.toSorting(customerRecordRequestDto.getSortDto())));
     }
 }
