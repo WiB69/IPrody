@@ -5,3 +5,6 @@ databaseChangeLog:
   - include:
       file: create-table-payment.yaml
       relativeToChangelogFile: true
+  - include:
+      file: create-table-outbox-message.yaml
+      relativeToChangelogFile: true

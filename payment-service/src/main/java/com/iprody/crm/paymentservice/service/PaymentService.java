@@ -9,10 +9,7 @@ import java.util.UUID;
 
 public interface PaymentService {
 
-    List<Payment> findAllByFilter(PaymentFilter paymentFilter,
-                                  Pageable pageParams);
+    List<Payment> findAllByFilter(PaymentFilter paymentFilter, Pageable pageParams);
 
-    Payment save(Payment payment);
-
-    Payment findById(UUID id);
+    boolean existsByInquiryRefId(UUID orderRef);
 }
