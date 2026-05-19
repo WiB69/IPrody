@@ -1,10 +1,12 @@
 package com.iprody.crm.paymentservice.service;
 
+import com.iprody.crm.paymentservice.exception.PaymentException;
 import com.iprody.crm.paymentservice.model.dto.PaymentFilter;
 import com.iprody.crm.paymentservice.model.entity.Payment;
 import com.iprody.crm.paymentservice.repository.PaymentRepository;
 import com.iprody.crm.paymentservice.utils.PaymentDataValidator;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,24 +14,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final PaymentDataValidator pageDataValidator;
 
-    @Autowired
-    public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentDataValidator pageDataValidator) {
-        this.paymentRepository = paymentRepository;
-        this.pageDataValidator = pageDataValidator;
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public List<Payment> findAllByFilter(PaymentFilter paymentFilter,
-                                         Pageable pageParams) {
-        //TODO: move validation after KafkaListener realization
-        Pageable pageable = pageDataValidator.validatePageParamsAndGetValid(pageParams.getPageNumber(), pageParams.getPageSize());
+    public List<Payment> findAllByFilter(PaymentFilter paymentFilter, Pageable pageParams) {
+        Pageable pageable = pageDataValidator.validatePageParamsAndGetValid(
+                pageParams.getPageNumber(),
+                pageParams.getPageSize()
+        );
 
         return paymentRepository.findAllByFilter(
                 paymentFilter.getFrom(),
@@ -41,13 +40,14 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    @Transactional
-    public Payment save(Payment payment) {
-        return paymentRepository.save(payment);
+    public boolean existsByInquiryRefId(UUID orderRef) {
+        return paymentRepository.existsByInquiryRefId(orderRef);
     }
 
     @Override
-    public Payment findById(UUID id) {
-        return paymentRepository.findById(id).orElse(null);
+    public Payment findByInquiryRefId(UUID orderId) {
+        return paymentRepository.findByInquiryRefId(orderId)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + orderId));
     }
+
 }

@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -32,4 +33,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             @Param("paymentStatus") PaymentStatus paymentStatus,
             Pageable pageable
     );
+
+    Optional<Payment> findByInquiryRefId(UUID orderRef);
+
+    boolean existsByInquiryRefId(UUID inquiryRefId);
 }

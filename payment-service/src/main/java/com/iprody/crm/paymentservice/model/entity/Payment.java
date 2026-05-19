@@ -1,17 +1,19 @@
 package com.iprody.crm.paymentservice.model.entity;
 
+import com.iprody.crm.paymentservice.model.enums.PaymentState;
 import com.iprody.crm.paymentservice.model.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "PAYMENT")
+@Table(name = "PAYMENT", schema = "payment_db")
 public class Payment {
-    private static final int AMOUNT_PRECISION = 5;
+    private static final int AMOUNT_PRECISION = 10;
     private static final int AMOUNT_SCALE = 2;
 
     @Id
@@ -33,6 +35,10 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     @Column(name = "STATUS")
     private PaymentStatus paymentStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "STATE", nullable = false)
+    private PaymentState state;
 
     @Column(name = "NOTE")
     private String note;
