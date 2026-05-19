@@ -13,18 +13,15 @@ import java.util.UUID;
 @Repository
 public interface OutboxRepository extends JpaRepository<OutboxMessage, UUID> {
 
-    @Query("SELECT o FROM OutboxMessage o WHERE o.type = :type AND o.status = :status AND o.retryCount < :maxRetryCount ORDER BY o.createdAt ASC")
-    List<OutboxMessage> findByTypeAndStatusAndRetryCountLessThanOrderByCreatedAtAsc(
+    @Query("SELECT o FROM OutboxMessage o WHERE" +
+            " o.type = :type AND" +
+            " o.status = :status AND" +
+            " o.retryCount < :maxRetryCount" +
+            " ORDER BY o.createdAt ASC")
+    List<OutboxMessage> findPendingMessages(
             @Param("type") OutboxMessage.OutboxType type,
             @Param("status") OutboxMessage.OutboxStatus status,
             @Param("maxRetryCount") int maxRetryCount,
             Pageable pageable
     );
-
-    default OutboxMessage findByAggregateId(UUID aggregateId) {
-        return findAll().stream()
-                .filter(msg -> aggregateId.equals(msg.getAggregateId()))
-                .findFirst()
-                .orElse(null);
-    }
 }

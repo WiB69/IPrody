@@ -45,6 +45,7 @@ public class PaymentOutboxProcessor {
     private final ObjectMapper objectMapper;
     private final OutboxCreator outboxCreator;
     private final PaymentStateMachine stateMachine;
+    private final PaymentService paymentService;
 
     @Value("${outbox.batch-size:10}")
     private int batchSize;
@@ -60,7 +61,7 @@ public class PaymentOutboxProcessor {
 
     @Transactional
     public void processIncomingPayments() {
-        List<OutboxMessage> pendingMessages = outboxRepository.findByTypeAndStatusAndRetryCountLessThanOrderByCreatedAtAsc(
+        List<OutboxMessage> pendingMessages = outboxRepository.findPendingMessages(
                 OutboxMessage.OutboxType.INCOMING_PAYMENT,
                 OutboxMessage.OutboxStatus.PENDING,
                 maxRetryCount,
@@ -72,8 +73,7 @@ public class PaymentOutboxProcessor {
                 UUID orderId = message.getAggregateId();
                 PaymentRequestEvent event = objectMapper.readValue(message.getEvent(), PaymentRequestEvent.class);
 
-                Payment payment = paymentRepository.findByInquiryRefId(orderId)
-                        .orElseThrow(() -> new PaymentException("Payment not found: " + orderId));
+                Payment payment = paymentService.findByInquiryRefId(orderId);
 
                 XPaymentRequest xRequest = buildXPaymentRequest(event, message.getAggregateId().toString());
                 XPaymentResponse response = paymentProviderService.initiatePayment(xRequest);
@@ -95,7 +95,7 @@ public class PaymentOutboxProcessor {
 
     @Transactional
     public void processStatusChecks() {
-        List<OutboxMessage> pendingMessages = outboxRepository.findByTypeAndStatusAndRetryCountLessThanOrderByCreatedAtAsc(
+        List<OutboxMessage> pendingMessages = outboxRepository.findPendingMessages(
                 OutboxMessage.OutboxType.STATUS_CHECK,
                 OutboxMessage.OutboxStatus.PENDING,
                 maxRetryCount,
@@ -109,17 +109,9 @@ public class PaymentOutboxProcessor {
 
                 XPaymentResponse response = paymentProviderService.checkPaymentStatus(transactionId);
 
-                Payment payment = paymentRepository.findByInquiryRefId(orderId)
-                        .orElseThrow(() -> new PaymentException("Payment not found for order: " + orderId));
+                Payment payment = paymentService.findByInquiryRefId(orderId);
 
-                if (SUCCEEDED.equals(response.getStatus())) {
-                    PaymentState newState = stateMachine.transition(payment.getState(), PaymentStateEvent.SUCCEED);
-                    finalizePayment(payment, message, orderId, response, newState, APPROVED);
-                } else if (CANCELED.equals(response.getStatus())) {
-                    PaymentState newState = stateMachine.transition(payment.getState(), PaymentStateEvent.FAIL);
-                    finalizePayment(payment, message, orderId, response, newState, DECLINED);
-                } else {
-                    log.info("Payment {} still processing, will retry later", payment.getId());
+                if (!handlePaymentStatus(response, payment, message, orderId)) {
                     continue;
                 }
 
@@ -172,22 +164,8 @@ public class PaymentOutboxProcessor {
         if (message.getRetryCount() >= maxRetryCount) {
             try {
                 if (message.getPaymentId() != null) {
-                    paymentRepository.findById(message.getPaymentId()).ifPresent(payment -> {
-                        try {
-                            if (payment.getState() != PaymentState.SUCCEEDED &&
-                                    payment.getState() != PaymentState.FAILED) {
-                                payment.setState(stateMachine.transition(
-                                        payment.getState(),
-                                        PaymentStateEvent.SEND_TO_DLQ
-                                ));
-                                payment.setUpdatedAt(Timestamp.from(Instant.now()));
-                                paymentRepository.save(payment);
-                                log.info("Payment {} moved to DLQ state", payment.getId());
-                            }
-                        } catch (PaymentException stateEx) {
-                            log.error("Failed to transition payment {} to DLQ state", payment.getId(), stateEx);
-                        }
-                    });
+                    paymentRepository.findById(message.getPaymentId())
+                            .ifPresent(payment -> transitionPaymentToDlqState(payment));
                 }
 
                 String key = message.getAggregateId() != null ? message.getAggregateId().toString() : null;
@@ -208,5 +186,40 @@ public class PaymentOutboxProcessor {
         }
 
         outboxRepository.save(message);
+    }
+
+    private void transitionPaymentToDlqState(Payment payment) {
+        try {
+            if (payment.getState() != PaymentState.SUCCEEDED &&
+                    payment.getState() != PaymentState.FAILED) {
+                payment.setState(stateMachine.transition(
+                        payment.getState(),
+                        PaymentStateEvent.SEND_TO_DLQ
+                ));
+                payment.setUpdatedAt(Timestamp.from(Instant.now()));
+                paymentRepository.save(payment);
+                log.info("Payment {} moved to DLQ state", payment.getId());
+            }
+        } catch (PaymentException stateEx) {
+            log.error("Failed to transition payment {} to DLQ state", payment.getId(), stateEx);
+        }
+    }
+
+    private boolean handlePaymentStatus(XPaymentResponse response,
+                                        Payment payment,
+                                        OutboxMessage message,
+                                        UUID orderId) {
+        if (SUCCEEDED.equals(response.getStatus())) {
+            PaymentState newState = stateMachine.transition(payment.getState(), PaymentStateEvent.SUCCEED);
+            finalizePayment(payment, message, orderId, response, newState, APPROVED);
+            return true;
+        } else if (CANCELED.equals(response.getStatus())) {
+            PaymentState newState = stateMachine.transition(payment.getState(), PaymentStateEvent.FAIL);
+            finalizePayment(payment, message, orderId, response, newState, DECLINED);
+            return true;
+        } else {
+            log.info("Payment {} still processing, will retry later", payment.getId());
+            return false;
+        }
     }
 }

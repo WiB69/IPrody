@@ -1,5 +1,6 @@
 package com.iprody.crm.paymentservice.service;
 
+import com.iprody.crm.paymentservice.exception.PaymentException;
 import com.iprody.crm.paymentservice.model.dto.PaymentFilter;
 import com.iprody.crm.paymentservice.model.entity.Payment;
 import com.iprody.crm.paymentservice.repository.PaymentRepository;
@@ -42,4 +43,11 @@ public class PaymentServiceImpl implements PaymentService {
     public boolean existsByInquiryRefId(UUID orderRef) {
         return paymentRepository.existsByInquiryRefId(orderRef);
     }
+
+    @Override
+    public Payment findByInquiryRefId(UUID orderId) {
+        return paymentRepository.findByInquiryRefId(orderId)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + orderId));
+    }
+
 }

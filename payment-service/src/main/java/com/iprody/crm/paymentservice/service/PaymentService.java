@@ -12,4 +12,6 @@ public interface PaymentService {
     List<Payment> findAllByFilter(PaymentFilter paymentFilter, Pageable pageParams);
 
     boolean existsByInquiryRefId(UUID orderRef);
+
+    Payment findByInquiryRefId(UUID orderId);
 }
